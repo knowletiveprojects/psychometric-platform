@@ -12,10 +12,11 @@ app = FastAPI(title="Psychometric Platform API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
-        "https://psychometric-platform-pm2c.vercel.app",
-        "https://psychometric-platform-pm2c-git-main-akash-gaikwad-s-projects.vercel.app",
-        "https://psychometric-platform-pm2c-c2h71a7x1-akash-gaikwad-s-projects.vercel.app",
+    "http://localhost:3000",
+    "https://psychometric-platform-pm2c.vercel.app",
+    "https://psychometric-platform-pm2c-git-main-akash-gaikwad-s-projects.vercel.app",
+    "https://psychometric-platform-pm2c-c2h71a7x1-akash-gaikwad-s-projects.vercel.app",
+    "https://psychometric-platform-two.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
