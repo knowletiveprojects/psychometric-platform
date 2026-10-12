@@ -1,6 +1,24 @@
-node_modules
+
+# Environment variables and secrets
 .env
+.env.*
+!.env.example
 backend/.env
-dist
-build
-.next
+
+# Node.js dependencies
+node_modules/
+
+# Next.js generated files
+.next/
+
+# Build output
+dist/
+build/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Python virtual environments
+venv/
+.venv/
