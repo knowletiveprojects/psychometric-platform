@@ -25,6 +25,7 @@ app.add_middleware(
         "https://psychometric-platform-pm2c-git-main-akash-gaikwad-s-projects.vercel.app",
         "https://psychometric-platform-pm2c-c2h71a7x1-akash-gaikwad-s-projects.vercel.app",
         "https://psychometric-platform-two.vercel.app",
+        "https://psychometric.knowletive.in",
     ],
     allow_credentials=True,
     allow_methods=["*"],
