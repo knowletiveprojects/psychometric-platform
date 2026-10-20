@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
@@ -17,10 +18,11 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
 
-        # Production frontend from your browser screenshot
-        "https://psychometric-platform-cbvypoomy.vercel.app",
+        # Current production frontend
+        "https://psychometric-platform-hctu07j6p.vercel.app",
 
         # Other existing Vercel deployments
+        "https://psychometric-platform-cbvypoomy.vercel.app",
         "https://psychometric-platform-pm2c.vercel.app",
         "https://psychometric-platform-pm2c-git-main-akash-gaikwad-s-projects.vercel.app",
         "https://psychometric-platform-pm2c-c2h71a7x1-akash-gaikwad-s-projects.vercel.app",
@@ -38,6 +40,7 @@ app.include_router(test.router)
 app.include_router(report.router)
 app.include_router(admin.router)
 
+
 @app.get("/")
 def root():
-    return {"status": "Psychometric Platform API is running ✅"}
+    return {"status": "Psychometric Platform API is running"}
