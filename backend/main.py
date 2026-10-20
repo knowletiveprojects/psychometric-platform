@@ -17,6 +17,7 @@ app.add_middleware(
         # Local development
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "https://psychometric-platform-hctu7j6p.vercel.app",
 
         # Current production frontend
         "https://psychometric-platform-hctu07j6p.vercel.app",
