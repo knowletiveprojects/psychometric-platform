@@ -10,19 +10,19 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Psychometric Platform API", version="1.0.0")
 
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         # Local development
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "https://psychometric-platform-hctu7j6p.vercel.app",
 
         # Current production frontend
-        "https://psychometric-platform-hctu07j6p.vercel.app",
+        "https://psychometric-platform-ro7atzlz6.vercel.app",
 
         # Other existing Vercel deployments
+        "https://psychometric-platform-hctu7j6p.vercel.app",
+        "https://psychometric-platform-hctu07j6p.vercel.app",
         "https://psychometric-platform-cbvypoomy.vercel.app",
         "https://psychometric-platform-pm2c.vercel.app",
         "https://psychometric-platform-pm2c-git-main-akash-gaikwad-s-projects.vercel.app",
@@ -34,7 +34,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 app.include_router(auth.router)
 app.include_router(test.router)
