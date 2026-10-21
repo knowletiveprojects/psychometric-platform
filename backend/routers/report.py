@@ -204,22 +204,46 @@ def download_pdf(
         author="Knowletive",
     )
 
-    PRIMARY = colors.HexColor("#667eea")
-    SECONDARY = colors.HexColor("#764ba2")
-    DARK = colors.HexColor("#1e293b")
-    GRAY = colors.HexColor("#64748b")
-    LGRAY = colors.HexColor("#f1f5f9")
+    PRIMARY = colors.HexColor("#2855D9")       # Knowletive blue
+    SECONDARY = colors.HexColor("#0F9F91")     # Teal accent
+    DARK = colors.HexColor("#18243A")
+    GRAY = colors.HexColor("#5F6F86")
+    LGRAY = colors.HexColor("#F4F7FC")
     WHITE = colors.white
-    GREEN = colors.HexColor("#10b981")
-    ORANGE = colors.HexColor("#f59e0b")
-    RED = colors.HexColor("#ef4444")
-    BLUE = colors.HexColor("#3b82f6")
+    GREEN = colors.HexColor("#0E9F6E")
+    ORANGE = colors.HexColor("#D97706")
+    RED = colors.HexColor("#DC4C4C")
+    BLUE = colors.HexColor("#4285F4")
+    BORDER = colors.HexColor("#E1E7F0")
+
+    # Use a clean modern font when available, with portable PDF-safe fallback.
+    FONT = "Helvetica"
+    FONT_BOLD = "Helvetica-Bold"
+    try:
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        font_candidates = [
+            ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "KnowletiveSans"),
+            ("/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf", "KnowletiveSans"),
+        ]
+        bold_candidates = [
+            ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "KnowletiveSansBold"),
+            ("/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf", "KnowletiveSansBold"),
+        ]
+        regular_path = next((path for path, _ in font_candidates if os.path.exists(path)), None)
+        bold_path = next((path for path, _ in bold_candidates if os.path.exists(path)), None)
+        if regular_path and bold_path:
+            pdfmetrics.registerFont(TTFont("KnowletiveSans", regular_path))
+            pdfmetrics.registerFont(TTFont("KnowletiveSansBold", bold_path))
+            FONT, FONT_BOLD = "KnowletiveSans", "KnowletiveSansBold"
+    except Exception:
+        pass
 
     title_s = ParagraphStyle(
         "ReportTitle",
         fontSize=18,
-        fontName="Helvetica-Bold",
-        textColor=WHITE,
+        fontName=FONT_BOLD,
+        textColor=DARK,
         alignment=TA_CENTER,
         leading=22,
     )
@@ -227,8 +251,8 @@ def download_pdf(
     sub_s = ParagraphStyle(
         "ReportSubtitle",
         fontSize=9,
-        fontName="Helvetica",
-        textColor=colors.HexColor("#e2e8f0"),
+        fontName=FONT,
+        textColor=GRAY,
         alignment=TA_CENTER,
         leading=12,
     )
@@ -236,17 +260,19 @@ def download_pdf(
     sec_s = ParagraphStyle(
         "SectionHeading",
         fontSize=13,
-        fontName="Helvetica-Bold",
+        fontName=FONT_BOLD,
         textColor=DARK,
-        spaceBefore=6,
-        spaceAfter=5,
+        spaceBefore=8,
+        spaceAfter=6,
         leading=17,
+        borderColor=PRIMARY,
+        borderWidth=0,
     )
 
     lbl_s = ParagraphStyle(
         "Label",
         fontSize=9,
-        fontName="Helvetica-Bold",
+        fontName=FONT_BOLD,
         textColor=DARK,
         leading=12,
     )
@@ -254,7 +280,7 @@ def download_pdf(
     val_s = ParagraphStyle(
         "Value",
         fontSize=9,
-        fontName="Helvetica",
+        fontName=FONT,
         textColor=GRAY,
         leading=13,
     )
@@ -262,7 +288,7 @@ def download_pdf(
     sm_s = ParagraphStyle(
         "SmallText",
         fontSize=8,
-        fontName="Helvetica",
+        fontName=FONT,
         textColor=GRAY,
         leading=11,
     )
@@ -270,8 +296,8 @@ def download_pdf(
     car_s = ParagraphStyle(
         "CareerBanner",
         fontSize=17,
-        fontName="Helvetica-Bold",
-        textColor=WHITE,
+        fontName=FONT_BOLD,
+        textColor=PRIMARY,
         alignment=TA_CENTER,
         leading=21,
     )
@@ -279,7 +305,7 @@ def download_pdf(
     rt_s = ParagraphStyle(
         "RightAligned",
         fontSize=9,
-        fontName="Helvetica-Bold",
+        fontName=FONT_BOLD,
         textColor=DARK,
         alignment=TA_RIGHT,
     )
@@ -290,22 +316,14 @@ def download_pdf(
     # -----------------------------------------------------
     # HEADER AND KNOWLETIVE BRANDING
     # -----------------------------------------------------
-    logo_path = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "static",
-        "logo.png",
-    )
-
-    if not os.path.exists(logo_path):
-        logo_path = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "..",
-            "frontend",
-            "public",
-            "logo.png",
-        )
+    logo_candidates = [
+        os.getenv("KNOWLETIVE_LOGO_PATH", ""),
+        os.path.join(os.path.dirname(__file__), "..", "static", "logo.png"),
+        os.path.join(os.path.dirname(__file__), "..", "static", "knowletive-logo.png"),
+        os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "public", "logo.png"),
+        os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "public", "knowletive-logo.png"),
+    ]
+    logo_path = next((os.path.abspath(path) for path in logo_candidates if path and os.path.exists(path)), "")
 
     if os.path.exists(logo_path):
         logo = RLImage(
@@ -339,7 +357,9 @@ def download_pdf(
 
     header.setStyle(
         TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), PRIMARY),
+            ("BACKGROUND", (0, 0), (-1, -1), WHITE),
+            ("BOX", (0, 0), (-1, -1), 0.8, BORDER),
+            ("LINEBELOW", (0, 0), (-1, -1), 2, PRIMARY),
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("TOPPADDING", (0, 0), (-1, -1), 12),
@@ -363,7 +383,8 @@ def download_pdf(
 
     tagline.setStyle(
         TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), SECONDARY),
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#EFF4FF")),
+            ("TEXTCOLOR", (0, 0), (-1, -1), DARK),
             ("TOPPADDING", (0, 0), (-1, -1), 5),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
         ])
@@ -439,7 +460,7 @@ def download_pdf(
                 (0, 0),
                 (-1, -1),
                 0.3,
-                colors.HexColor("#e2e8f0"),
+                BORDER,
             ),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ])
@@ -472,7 +493,9 @@ def download_pdf(
 
     career_table.setStyle(
         TableStyle([
-            ("BACKGROUND", (0, 0), (-1, -1), PRIMARY),
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F2F6FF")),
+            ("BOX", (0, 0), (-1, -1), 0.8, BORDER),
+            ("LINEBEFORE", (0, 0), (-1, -1), 3, PRIMARY),
             ("ALIGN", (0, 0), (-1, -1), "CENTER"),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("TOPPADDING", (0, 0), (-1, -1), 9),
@@ -572,13 +595,13 @@ def download_pdf(
             chart.height = graph_height - 14 * mm
             chart.categoryAxis.categoryNames = list(reversed(graph_titles))
             chart.data = [list(reversed(graph_scores))]
-            chart.categoryAxis.labels.fontName = "Helvetica"
+            chart.categoryAxis.labels.fontName = FONT
             chart.categoryAxis.labels.fontSize = 7
             chart.categoryAxis.labels.boxAnchor = "e"
             chart.valueAxis.valueMin = 0
             chart.valueAxis.valueMax = 100
             chart.valueAxis.valueStep = 20
-            chart.valueAxis.labels.fontName = "Helvetica"
+            chart.valueAxis.labels.fontName = FONT
             chart.valueAxis.labels.fontSize = 7
             chart.bars[0].fillColor = PRIMARY
             chart.barWidth = 7
@@ -613,7 +636,7 @@ def download_pdf(
                     (0, 0),
                     (-1, -1),
                     0.3,
-                    colors.HexColor("#e2e8f0"),
+                    BORDER,
                 ),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ])
@@ -713,7 +736,7 @@ def download_pdf(
         status_style = ParagraphStyle(
             "IntelligenceStatus",
             fontSize=7.5,
-            fontName="Helvetica-Bold",
+            fontName=FONT_BOLD,
             textColor=status_color,
             leading=10,
         )
@@ -749,7 +772,7 @@ def download_pdf(
                 (0, 0),
                 (-1, -1),
                 0.3,
-                colors.HexColor("#e2e8f0"),
+                BORDER,
             ),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ])
@@ -831,7 +854,7 @@ def download_pdf(
         status_style = ParagraphStyle(
             "RIASECStatus",
             fontSize=7.5,
-            fontName="Helvetica-Bold",
+            fontName=FONT_BOLD,
             textColor=status_color,
             leading=10,
         )
@@ -867,7 +890,7 @@ def download_pdf(
                 (0, 0),
                 (-1, -1),
                 0.3,
-                colors.HexColor("#e2e8f0"),
+                BORDER,
             ),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ])
@@ -1021,12 +1044,28 @@ def download_pdf(
         guidance = get_career_guidance(career_title)
 
         story.append(Spacer(1, 3 * mm))
-        story.append(
-            Paragraph(
-                f"{index}. {safe_text(guidance.get('career_title') or guidance.get('title') or career_title)}",
-                sec_s,
-            )
+        career_heading = Table(
+            [[Paragraph(
+                f"<font color='#2855D9'>CAREER {index:02d}</font><br/>"
+                f"{safe_text(guidance.get('career_title') or guidance.get('title') or career_title)}",
+                ParagraphStyle(
+                    f"CareerHeading{index}", parent=sec_s,
+                    fontName=FONT_BOLD, fontSize=15, leading=19,
+                    textColor=DARK, spaceBefore=0, spaceAfter=0,
+                ),
+            )]],
+            colWidths=[W],
         )
+        career_heading.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F2F6FF")),
+            ("BOX", (0, 0), (-1, -1), 0.6, BORDER),
+            ("LINEBEFORE", (0, 0), (-1, -1), 3, PRIMARY),
+            ("LEFTPADDING", (0, 0), (-1, -1), 10),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+            ("TOPPADDING", (0, 0), (-1, -1), 9),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
+        ]))
+        story.append(career_heading)
 
         story.append(
             Paragraph(
@@ -1045,6 +1084,37 @@ def download_pdf(
             )
         )
         story.append(Spacer(1, 3 * mm))
+
+        # Visual career roadmap: use this career's own pathway items where available.
+        roadmap_items = guidance.get("pathways", []) or []
+        if isinstance(roadmap_items, str):
+            roadmap_items = [roadmap_items]
+        roadmap_items = [str(item).strip() for item in roadmap_items if str(item).strip()][:3]
+        if roadmap_items:
+            roadmap_cells = []
+            for step_index, roadmap_item in enumerate(roadmap_items, start=1):
+                roadmap_cells.append(Paragraph(
+                    f"<font color='#2855D9'><b>STEP {step_index}</b></font><br/>{safe_text(roadmap_item)}",
+                    ParagraphStyle(
+                        f"RoadmapStep{index}_{step_index}", parent=val_s,
+                        fontName=FONT, fontSize=7.5, leading=10,
+                        textColor=GRAY,
+                    ),
+                ))
+            roadmap_table = Table([roadmap_cells], colWidths=[W / len(roadmap_cells)] * len(roadmap_cells))
+            roadmap_table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F2F6FF")),
+                ("BOX", (0, 0), (-1, -1), 0.6, BORDER),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, BORDER),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 7),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+                ("TOPPADDING", (0, 0), (-1, -1), 7),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+            ]))
+            story.append(Paragraph("CAREER ROADMAP", lbl_s))
+            story.append(roadmap_table)
+            story.append(Spacer(1, 3 * mm))
 
         guidance_sections = [
             ("Skills to Develop", "skills"),
@@ -1076,7 +1146,7 @@ def download_pdf(
             for item in items:
                 story.append(
                     Paragraph(
-                        f"• {safe_text(item)}",
+                        f"<font color='#2855D9'>●</font>  {safe_text(item)}",
                         val_s,
                     )
                 )
@@ -1184,7 +1254,7 @@ def download_pdf(
                 ParagraphStyle(
                     "FooterRight",
                     fontSize=8,
-                    fontName="Helvetica",
+                    fontName=FONT,
                     textColor=GRAY,
                     alignment=TA_RIGHT,
                 ),
@@ -1200,7 +1270,7 @@ def download_pdf(
                 (0, 0),
                 (-1, -1),
                 0.5,
-                colors.HexColor("#e2e8f0"),
+                BORDER,
             ),
             ("TOPPADDING", (0, 0), (-1, -1), 8),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -1217,20 +1287,23 @@ def download_pdf(
         canvas.saveState()
 
         # Light diagonal watermark behind the page content.
-        canvas.setFillColor(colors.HexColor("#F1F3FA"))
+        canvas.setFillColor(colors.HexColor("#F7F9FD"))
         canvas.translate(A4[0] / 2, A4[1] / 2)
         canvas.rotate(35)
-        canvas.setFont("Helvetica-Bold", 38)
+        canvas.setFont(FONT_BOLD, 38)
         canvas.drawCentredString(0, 0, "KNOWLETIVE")
         canvas.restoreState()
 
         # Footer line, company label and page number.
         canvas.saveState()
         canvas.setStrokeColor(colors.HexColor("#DCE3EF"))
-        canvas.setLineWidth(0.6)
+        canvas.setLineWidth(0.8)
         canvas.line(20 * mm, 14 * mm, A4[0] - 20 * mm, 14 * mm)
+        canvas.setStrokeColor(PRIMARY)
+        canvas.setLineWidth(2)
+        canvas.line(20 * mm, 14 * mm, 42 * mm, 14 * mm)
         canvas.setFillColor(GRAY)
-        canvas.setFont("Helvetica", 7)
+        canvas.setFont(FONT, 7)
         canvas.drawString(20 * mm, 9 * mm, "Knowletive | Career Guidance")
         canvas.drawRightString(A4[0] - 20 * mm, 9 * mm, f"Page {document.page}")
         canvas.restoreState()
