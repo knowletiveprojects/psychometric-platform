@@ -179,6 +179,8 @@ def download_pdf(
         )
         from reportlab.lib.styles import ParagraphStyle
         from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+        from reportlab.graphics.shapes import Drawing
+        from reportlab.graphics.charts.barcharts import HorizontalBarChart
 
     except ImportError:
         raise HTTPException(
@@ -530,6 +532,62 @@ def download_pdf(
                 Paragraph(safe_text(title), val_s),
                 Paragraph(f"<b>{score:.1f}</b>", rt_s),
             ])
+
+        # -------------------------------------------------
+        # VISUAL CAREER-MATCH COMPARISON GRAPH
+        # Scores are relative ranking values, not probabilities.
+        # -------------------------------------------------
+        graph_titles = []
+        graph_scores = []
+
+        for career in top_5[:5]:
+            if isinstance(career, dict):
+                graph_title = (
+                    career.get("title")
+                    or career.get("career")
+                    or career.get("name")
+                    or "Career option"
+                )
+                raw_score = career.get("confidence", 0)
+            else:
+                graph_title = str(career)
+                raw_score = 0
+
+            try:
+                graph_score = float(raw_score or 0)
+            except (ValueError, TypeError):
+                graph_score = 0.0
+
+            graph_titles.append(str(graph_title)[:30])
+            graph_scores.append(max(0.0, min(100.0, graph_score)))
+
+        if graph_scores:
+            graph_height = max(55 * mm, len(graph_scores) * 13 * mm)
+            drawing = Drawing(W, graph_height)
+
+            chart = HorizontalBarChart()
+            chart.x = 58 * mm
+            chart.y = 7 * mm
+            chart.width = W - 65 * mm
+            chart.height = graph_height - 14 * mm
+            chart.categoryAxis.categoryNames = list(reversed(graph_titles))
+            chart.data = [list(reversed(graph_scores))]
+            chart.categoryAxis.labels.fontName = "Helvetica"
+            chart.categoryAxis.labels.fontSize = 7
+            chart.categoryAxis.labels.boxAnchor = "e"
+            chart.valueAxis.valueMin = 0
+            chart.valueAxis.valueMax = 100
+            chart.valueAxis.valueStep = 20
+            chart.valueAxis.labels.fontName = "Helvetica"
+            chart.valueAxis.labels.fontSize = 7
+            chart.bars[0].fillColor = PRIMARY
+            chart.barWidth = 7
+            chart.groupSpacing = 5
+            drawing.add(chart)
+
+            story.append(Paragraph("Career Match Comparison", lbl_s))
+            story.append(drawing)
+            story.append(Spacer(1, 4 * mm))
 
         score_table = Table(
             score_rows,
@@ -965,7 +1023,7 @@ def download_pdf(
         story.append(Spacer(1, 3 * mm))
         story.append(
             Paragraph(
-                f"{index}. {safe_text(guidance.get('title'))}",
+                f"{index}. {safe_text(guidance.get('career_title') or guidance.get('title') or career_title)}",
                 sec_s,
             )
         )
@@ -994,10 +1052,19 @@ def download_pdf(
             ("Portfolio Project Ideas", "projects"),
             ("Suggested Learning Pathway", "pathways"),
             ("Possible Related Roles", "roles"),
+            ("India Salary Guidance", "indicative_salary_india"),
+            ("Education and Training Cost Guidance", "education_cost_india"),
+            ("Future Outlook", "future_outlook"),
+            ("Recommended Next Steps", "recommended_next_steps"),
         ]
 
         for label, key in guidance_sections:
             items = guidance.get(key, [])
+
+            if isinstance(items, str):
+                items = [items]
+            elif items is None:
+                items = []
 
             if not items:
                 continue
@@ -1016,17 +1083,15 @@ def download_pdf(
 
             story.append(Spacer(1, 2 * mm))
 
-        if (
-            guidance.get("catalogue_status")
-            == "needs_career_specific_research"
-        ):
+        if guidance.get("catalogue_status") in {
+            "needs_career_specific_research",
+            "domain_specific_profile_needs_current_source_verification",
+        }:
             story.append(
                 Paragraph(
-                    "<i>Career-specific guidance for this option "
-                    "has not yet been fully added to the catalogue. "
-                    "Verify required qualifications, course choices, "
-                    "fees, and employment requirements using current, "
-                    "reliable sources before making a decision.</i>",
+                    "<i>This is exploratory career guidance, not a guarantee. "
+                    "Verify current eligibility, accreditation, licensing, fees, "
+                    "salary data and recruitment rules with official or current sources.</i>",
                     sm_s,
                 )
             )
